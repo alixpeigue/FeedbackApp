@@ -6,5 +6,13 @@ pub struct Report {
     pub text: String,
     pub location: i32,
     pub worker: i32,
-    pub contact: i32,
+    pub contract: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NewReport {
+    pub text: String,
+    pub location: i32,
+    pub worker: i32,
+    pub contract: i32,
 }
