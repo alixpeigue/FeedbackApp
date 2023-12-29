@@ -3,7 +3,8 @@ use axum::{
     extract::{Path, Query},
     http::StatusCode,
     response::IntoResponse,
-    Extension, Json,
+    routing::{get, post},
+    Extension, Json, Router,
 };
 use serde::Deserialize;
 use sqlx::{PgPool, Postgres, QueryBuilder};
@@ -13,6 +14,13 @@ use crate::{
     models::{NewReport, Report},
 };
 
+pub fn router() -> Router {
+    Router::new()
+        .route("/", get(all_reports))
+        .route("/", post(create_report))
+        .route("/:id", get(report))
+}
+
 #[derive(Debug, Deserialize)]
 pub struct Params {
     search: Option<String>,
@@ -21,7 +29,7 @@ pub struct Params {
     client: Option<i32>,
 }
 
-pub async fn all_reports(
+async fn all_reports(
     Extension(pool): Extension<PgPool>,
     Query(params): Query<Params>,
 ) -> Result<impl IntoResponse, ApplicationError> {
@@ -35,7 +43,7 @@ pub async fn all_reports(
         params.client,
     ) {
     } else {
-        if let Some(client) = params.client {
+        if let Some(_) = params.client {
             list.push_unseparated(" JOIN contract co ON co.id = r.contract");
         }
         list.push_unseparated(" WHERE ");
@@ -62,7 +70,7 @@ pub async fn all_reports(
     Ok((StatusCode::OK, Json(reports)))
 }
 
-pub async fn report(
+async fn report(
     Path(id): Path<i32>,
     Extension(pool): Extension<PgPool>,
 ) -> Result<Json<Report>, ApplicationError> {
@@ -81,8 +89,7 @@ pub async fn report(
     Ok(Json(report))
 }
 
-#[debug_handler]
-pub async fn create_report(
+async fn create_report(
     Extension(pool): Extension<PgPool>,
     Json(report): Json<NewReport>,
 ) -> Result<(StatusCode, Json<NewReport>), ApplicationError> {

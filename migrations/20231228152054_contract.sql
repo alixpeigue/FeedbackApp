@@ -1,6 +1,7 @@
 CREATE TABLE contract (
     id SERIAL PRIMARY KEY,
-    client INT REFERENCES client(id)
+    description TEXT,
+    client INT REFERENCES client(id) NOT NULL
 );
 
-INSERT INTO contract (client) VALUES (1), (2);
+INSERT INTO contract (description, client) VALUES ('entretien de matériel roulant', 1), (NULL, 2);

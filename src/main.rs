@@ -28,9 +28,6 @@ async fn main() -> anyhow::Result<()> {
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
-    // tracing_subscriber::fmt::init();
-
-    // let db_connection_str = "postgres://postgres:passwd@localhost".to_string();
 
     // set up connection pool
     let pool = PgPoolOptions::new()
@@ -42,9 +39,11 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         .route("/", get(root))
-        .route("/reports", get(controllers::report::all_reports))
-        .route("/report", post(controllers::report::create_report))
-        .route("/report/:id", get(controllers::report::report))
+        .nest("/reports", controllers::report::router())
+        .nest("/contracts", controllers::contract::router())
+        .nest("/clients", controllers::client::router())
+        .nest("/workers", controllers::worker::router())
+        .nest("/locations", controllers::location::router())
         .layer(Extension(pool))
         .layer(TraceLayer::new_for_http());
 
