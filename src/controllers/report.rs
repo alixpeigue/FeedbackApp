@@ -6,7 +6,7 @@ use axum::{
     Extension, Json,
 };
 use serde::Deserialize;
-use sqlx::PgPool;
+use sqlx::{PgPool, Postgres, QueryBuilder};
 
 use crate::{
     errors::ApplicationError,
@@ -16,24 +16,49 @@ use crate::{
 #[derive(Debug, Deserialize)]
 pub struct Params {
     search: Option<String>,
+    contract: Option<i32>,
+    location: Option<i32>,
+    client: Option<i32>,
 }
 
 pub async fn all_reports(
     Extension(pool): Extension<PgPool>,
     Query(params): Query<Params>,
 ) -> Result<impl IntoResponse, ApplicationError> {
-    let reports: Vec<Report> = if let Some(search) = params.search {
-        sqlx::query_as!(
-            Report, 
-            "SELECT id, text, worker, location, contract FROM report WHERE ts @@ to_tsquery('french', $1)",
-            search
-        ).fetch_all(&pool).await?
+    let mut query_builder: QueryBuilder<Postgres> =
+        QueryBuilder::new("SELECT r.id, r.text, r.worker, r.location, r.contract FROM report r");
+    let mut list = query_builder.separated(" AND ");
+    if let (None, None, None, None) = (
+        &params.search,
+        params.contract,
+        params.location,
+        params.client,
+    ) {
     } else {
-        sqlx::query_as!(
-            Report,
-            "SELECT id, text, worker, location, contract FROM report"
-        ).fetch_all(&pool).await?
-    };
+        if let Some(client) = params.client {
+            list.push_unseparated(" JOIN contract co ON co.id = r.contract");
+        }
+        list.push_unseparated(" WHERE ");
+        if let Some(search) = params.search {
+            list.push_unseparated("ts @@ to_tsquery('french', ");
+            list.push_bind_unseparated(search);
+            list.push(" )");
+        }
+        if let Some(contract) = params.contract {
+            list.push("r.contract = ");
+            list.push_bind_unseparated(contract);
+        }
+        if let Some(location) = params.location {
+            list.push("r.location = ");
+            list.push_bind_unseparated(location);
+        }
+        if let Some(client) = params.client {
+            list.push("co.client = ");
+            list.push_bind_unseparated(client);
+        }
+    }
+    let reports: Vec<Report> = query_builder.build_query_as().fetch_all(&pool).await?;
+
     Ok((StatusCode::OK, Json(reports)))
 }
 
