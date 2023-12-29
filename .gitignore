@@ -1,2 +1,4 @@
+.env
+/.sqlx
 /data
 /target

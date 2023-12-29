@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{fs, time::Duration};
 
 use anyhow::Context;
 use axum::{
@@ -16,6 +16,11 @@ mod models;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    let env = fs::read_to_string(".env").unwrap();
+    let (key, database_url) = env.split_once('=').unwrap();
+
+    assert_eq!(key, "DATABASE_URL");
+
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
             std::env::var("tower_http=trace")
@@ -25,13 +30,13 @@ async fn main() -> anyhow::Result<()> {
         .init();
     // tracing_subscriber::fmt::init();
 
-    let db_connection_str = "postgres://postgres:passwd@localhost".to_string();
+    // let db_connection_str = "postgres://postgres:passwd@localhost".to_string();
 
     // set up connection pool
     let pool = PgPoolOptions::new()
         .max_connections(5)
         .acquire_timeout(Duration::from_secs(3))
-        .connect(&db_connection_str)
+        .connect(&database_url)
         .await
         .context("can't connect to database")?;
 

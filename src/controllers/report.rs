@@ -23,11 +23,16 @@ pub async fn all_reports(
     Query(params): Query<Params>,
 ) -> Result<impl IntoResponse, ApplicationError> {
     let reports: Vec<Report> = if let Some(search) = params.search {
-        let sql = "SELECT id, text, worker, location, contract FROM report WHERE ts @@ to_tsquery('french', $1)";
-        sqlx::query_as(sql).bind(search).fetch_all(&pool).await?
+        sqlx::query_as!(
+            Report, 
+            "SELECT id, text, worker, location, contract FROM report WHERE ts @@ to_tsquery('french', $1)",
+            search
+        ).fetch_all(&pool).await?
     } else {
-        let sql = "SELECT id, text, worker, location, contract FROM report";
-        sqlx::query_as(&sql).fetch_all(&pool).await?
+        sqlx::query_as!(
+            Report,
+            "SELECT id, text, worker, location, contract FROM report"
+        ).fetch_all(&pool).await?
     };
     Ok((StatusCode::OK, Json(reports)))
 }
@@ -36,15 +41,17 @@ pub async fn report(
     Path(id): Path<i32>,
     Extension(pool): Extension<PgPool>,
 ) -> Result<Json<Report>, ApplicationError> {
-    let sql = "SELECT * FROM report WHERE id=$1";
-    let report: Report = sqlx::query_as(sql)
-        .bind(id)
-        .fetch_one(&pool)
-        .await
-        .map_err(|err| match err {
-            sqlx::Error::RowNotFound => ApplicationError::NotFound,
-            error => error.into(),
-        })?;
+    let report = sqlx::query_as!(
+        Report,
+        "SELECT id, text, worker, location, contract FROM report WHERE id=$1",
+        id
+    )
+    .fetch_one(&pool)
+    .await
+    .map_err(|err| match err {
+        sqlx::Error::RowNotFound => ApplicationError::NotFound,
+        error => error.into(),
+    })?;
 
     Ok(Json(report))
 }

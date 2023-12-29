@@ -1,9 +1,9 @@
 CREATE TABLE report (
     id SERIAL PRIMARY KEY,
-    contract INT REFERENCES contract(id),
-    worker INT REFERENCES worker(id),
-    location INT REFERENCES location(id),
-    text TEXT,
+    contract INT REFERENCES contract(id) NOT NULL,
+    worker INT REFERENCES worker(id) NOT NULL,
+    location INT REFERENCES location(id) NOT NULL,
+    text TEXT NOT NULL, 
     ts TSVECTOR GENERATED ALWAYS AS (TO_TSVECTOR('french', text)) STORED
 );
 
