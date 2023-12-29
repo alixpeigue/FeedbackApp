@@ -1,10 +1,7 @@
 use std::{fs, time::Duration};
 
 use anyhow::Context;
-use axum::{
-    routing::{get, post},
-    Extension, Router,
-};
+use axum::{routing::get, Extension, Router};
 use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
