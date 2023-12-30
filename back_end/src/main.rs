@@ -4,7 +4,10 @@ use anyhow::Context;
 use axum::{routing::get, Extension, Router};
 use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
-use tower_http::trace::TraceLayer;
+use tower_http::{
+    cors::{Any, CorsLayer},
+    trace::TraceLayer,
+};
 use tracing_subscriber::prelude::*;
 
 mod controllers;
@@ -42,7 +45,8 @@ async fn main() -> anyhow::Result<()> {
         .nest("/workers", controllers::worker::router())
         .nest("/locations", controllers::location::router())
         .layer(Extension(pool))
-        .layer(TraceLayer::new_for_http());
+        .layer(TraceLayer::new_for_http())
+        .layer(CorsLayer::new().allow_origin(Any));
 
     // run it with hyper
     let listener = TcpListener::bind("127.0.0.1:3000").await?;
