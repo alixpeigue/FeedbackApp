@@ -2,21 +2,24 @@ use axum::{
     extract::{Path, Query},
     http::StatusCode,
     response::IntoResponse,
-    routing::{get, post},
+    routing::{delete, get, post, put},
     Extension, Json, Router,
 };
+use axum_login::AuthSession;
 use serde::Deserialize;
 use sqlx::{PgPool, Postgres, QueryBuilder};
 
 use crate::{
     errors::ApplicationError,
-    models::{NewReport, Report},
+    models::{Backend, NewReport, ResponseReport},
 };
 
 pub fn router() -> Router {
     Router::new()
         .route("/", get(all_reports))
         .route("/", post(create_report))
+        .route("/:id/upvotes", put(create_upvote))
+        .route("/:id/upvotes", delete(delete_upvote))
         .route("/:id", get(report))
 }
 
@@ -30,10 +33,15 @@ pub struct Params {
 
 async fn all_reports(
     Extension(pool): Extension<PgPool>,
+    auth_session: AuthSession<Backend>,
     Query(params): Query<Params>,
 ) -> Result<impl IntoResponse, ApplicationError> {
-    let mut query_builder: QueryBuilder<Postgres> =
-        QueryBuilder::new("SELECT r.id, r.text, r.worker, r.location, r.contract FROM report r");
+    let worker = auth_session.user.unwrap(); // should never happen
+    let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
+        "SELECT r.id, r.text, r.worker, r.location, r.contract, 
+        EXISTS(SELECT * FROM upvote WHERE worker_id = $1 and report_id = r.id) as upvoted 
+        FROM report r",
+    );
     let mut list = query_builder.separated(" AND ");
     if let (None, None, None, None) = (
         &params.search,
@@ -64,18 +72,25 @@ async fn all_reports(
             list.push_bind_unseparated(client);
         }
     }
-    let reports: Vec<Report> = query_builder.build_query_as().fetch_all(&pool).await?;
+    let reports: Vec<ResponseReport> = query_builder
+        .build_query_as()
+        .bind(worker.id)
+        .fetch_all(&pool)
+        .await?;
 
     Ok((StatusCode::OK, Json(reports)))
 }
 
 async fn report(
     Path(id): Path<i32>,
+    auth_session: AuthSession<Backend>,
     Extension(pool): Extension<PgPool>,
-) -> Result<Json<Report>, ApplicationError> {
+) -> Result<Json<ResponseReport>, ApplicationError> {
+    let worker = auth_session.user.unwrap();
     let report = sqlx::query_as!(
-        Report,
-        "SELECT id, text, worker, location, contract FROM report WHERE id=$1",
+        ResponseReport,
+        "SELECT id, text, worker, location, contract, EXISTS(SELECT * FROM upvote WHERE worker_id = $1 and report_id = id) as upvoted FROM report WHERE id=$2",
+        worker.id,
         id
     )
     .fetch_one(&pool)
@@ -90,16 +105,60 @@ async fn report(
 
 async fn create_report(
     Extension(pool): Extension<PgPool>,
+    auth_session: AuthSession<Backend>,
     Json(report): Json<NewReport>,
 ) -> Result<(StatusCode, Json<NewReport>), ApplicationError> {
+    let worker = auth_session.user.unwrap(); // should never panic
     let sql = "INSERT INTO report (text, worker, contract, location) VALUES ($1, $2, $3, $4)";
     sqlx::query(sql)
         .bind(&report.text)
-        .bind(report.worker)
+        .bind(worker.id)
         .bind(report.contract)
         .bind(report.location)
         .execute(&pool)
         .await?;
 
     Ok((StatusCode::CREATED, Json(report)))
+}
+
+async fn create_upvote(
+    Extension(pool): Extension<PgPool>,
+    Path(id): Path<i32>,
+    auth_session: AuthSession<Backend>,
+) -> Result<StatusCode, ApplicationError> {
+    if let Some(worker) = auth_session.user {
+        sqlx::query!(
+            "INSERT INTO upvote (worker_id, report_id) VALUES ($1, $2)",
+            worker.id,
+            id
+        )
+        .execute(&pool)
+        .await?;
+        Ok(StatusCode::CREATED)
+    } else {
+        panic!("Should never happen");
+    }
+}
+
+async fn delete_upvote(
+    Extension(pool): Extension<PgPool>,
+    Path(id): Path<i32>,
+    auth_session: AuthSession<Backend>,
+) -> Result<impl IntoResponse, ApplicationError> {
+    if let Some(worker) = auth_session.user {
+        sqlx::query!(
+            "DELETE FROM upvote WHERE worker_id = $1 AND report_id = $2",
+            worker.id,
+            id
+        )
+        .execute(&pool)
+        .await
+        .map_err(|err| match err {
+            sqlx::Error::RowNotFound => ApplicationError::NotFound,
+            err => err.into(),
+        })?;
+        Ok(())
+    } else {
+        panic!("Should never happen");
+    }
 }
