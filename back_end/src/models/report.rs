@@ -24,4 +24,5 @@ pub struct ResponseReport {
     pub worker: i32,
     pub contract: i32,
     pub upvoted: Option<bool>,
+    pub upvotes: Option<i64>,
 }

@@ -39,10 +39,16 @@ async fn all_reports(
     let worker = auth_session.user.unwrap(); // should never happen
     let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
         "SELECT r.id, r.text, r.worker, r.location, r.contract, 
-        EXISTS(SELECT * FROM upvote WHERE worker_id = $1 and report_id = r.id) as upvoted 
-        FROM report r",
+        EXISTS(SELECT * FROM upvote WHERE worker_id = ",
     );
+
     let mut list = query_builder.separated(" AND ");
+    list.push_bind_unseparated(worker.id);
+    list.push_unseparated(
+        " and report_id = r.id) as upvoted,
+        COUNT(worker_id) as upvotes
+        FROM report r LEFT OUTER JOIN upvote ON report_id = r.id",
+    );
     if let (None, None, None, None) = (
         &params.search,
         params.contract,
@@ -72,9 +78,10 @@ async fn all_reports(
             list.push_bind_unseparated(client);
         }
     }
+    list.push_unseparated(" GROUP BY r.id");
     let reports: Vec<ResponseReport> = query_builder
         .build_query_as()
-        .bind(worker.id)
+        // .bind(worker.id)
         .fetch_all(&pool)
         .await?;
 
@@ -89,7 +96,11 @@ async fn report(
     let worker = auth_session.user.unwrap();
     let report = sqlx::query_as!(
         ResponseReport,
-        "SELECT id, text, worker, location, contract, EXISTS(SELECT * FROM upvote WHERE worker_id = $1 and report_id = id) as upvoted FROM report WHERE id=$2",
+        "SELECT id, text, worker, location, contract, 
+        EXISTS(SELECT * FROM upvote WHERE worker_id = $1 and report_id = id) as upvoted,
+        COUNT(worker_id) as upvotes
+        FROM report LEFT OUTER JOIN upvote ON report_id = id WHERE id=$2
+        GROUP BY id",
         worker.id,
         id
     )
