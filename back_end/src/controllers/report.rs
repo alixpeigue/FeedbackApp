@@ -126,18 +126,15 @@ async fn create_upvote(
     Path(id): Path<i32>,
     auth_session: AuthSession<Backend>,
 ) -> Result<StatusCode, ApplicationError> {
-    if let Some(worker) = auth_session.user {
-        sqlx::query!(
-            "INSERT INTO upvote (worker_id, report_id) VALUES ($1, $2)",
-            worker.id,
-            id
-        )
-        .execute(&pool)
-        .await?;
-        Ok(StatusCode::CREATED)
-    } else {
-        panic!("Should never happen");
-    }
+    let worker = auth_session.user.unwrap(); // should never happen
+    sqlx::query!(
+        "INSERT INTO upvote (worker_id, report_id) VALUES ($1, $2)",
+        worker.id,
+        id
+    )
+    .execute(&pool)
+    .await?;
+    Ok(StatusCode::CREATED)
 }
 
 async fn delete_upvote(
@@ -145,20 +142,17 @@ async fn delete_upvote(
     Path(id): Path<i32>,
     auth_session: AuthSession<Backend>,
 ) -> Result<impl IntoResponse, ApplicationError> {
-    if let Some(worker) = auth_session.user {
-        sqlx::query!(
-            "DELETE FROM upvote WHERE worker_id = $1 AND report_id = $2",
-            worker.id,
-            id
-        )
-        .execute(&pool)
-        .await
-        .map_err(|err| match err {
-            sqlx::Error::RowNotFound => ApplicationError::NotFound,
-            err => err.into(),
-        })?;
-        Ok(())
-    } else {
-        panic!("Should never happen");
-    }
+    let worker = auth_session.user.unwrap(); // should never happen
+    sqlx::query!(
+        "DELETE FROM upvote WHERE worker_id = $1 AND report_id = $2",
+        worker.id,
+        id
+    )
+    .execute(&pool)
+    .await
+    .map_err(|err| match err {
+        sqlx::Error::RowNotFound => ApplicationError::NotFound,
+        err => err.into(),
+    })?;
+    Ok(())
 }
