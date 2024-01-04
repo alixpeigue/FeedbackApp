@@ -78,7 +78,7 @@ async fn all_reports(
             list.push_bind_unseparated(client);
         }
     }
-    list.push_unseparated(" GROUP BY r.id");
+    list.push_unseparated(" GROUP BY r.id ORDER BY upvotes DESC");
     let reports: Vec<ResponseReport> = query_builder
         .build_query_as()
         // .bind(worker.id)

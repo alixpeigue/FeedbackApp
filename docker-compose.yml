@@ -1,8 +1,9 @@
 version: '3.1'
 
 services:
-  db:
+  postgres:
     image: postgres:16.1-alpine3.19
+    container_name: postgres
     volumes:
       - ./data/db:/var/lib/postgresql/data
     restart: always
@@ -10,3 +11,11 @@ services:
       - 5432:5432
     environment:
       POSTGRES_PASSWORD: passwd
+  back_end:
+    depends_on:
+      - postgres
+    container_name: backend
+    build: back_end
+    restart: always
+    ports:
+      - 3000:3000
