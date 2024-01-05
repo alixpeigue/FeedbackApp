@@ -43,7 +43,7 @@
 	      	variant="outline"
 	      	role="combobox"
 	      	aria-expanded={open}
-	      	class="w-full lg:w-[200px] justify-between"
+	      	class="w-full justify-between"
 		>
       		{selectedValue?.label || defaultValue}
       		<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
