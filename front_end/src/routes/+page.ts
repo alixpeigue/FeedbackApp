@@ -3,23 +3,23 @@ import type { PageLoad } from './$types';
 export const load: PageLoad = async ({ fetch }) => {
 	return {
 		reports: await (async () => {
-			const res = await fetch('http://localhost:3000/reports');
+			const res = await fetch('http://localhost:3000/reports', {credentials: 'include'});
 			return await res.json();
 		})(),
 		clients: await (async () => {
-			const res = await fetch('http://localhost:3000/clients');
+			const res = await fetch('http://localhost:3000/clients', {credentials: 'include'});
 			return (await res.json()).map((el) => {
 				return { value: '' + el.id, label: el.name };
 			});
 		})(),
 		locations: await (async () => {
-			const res = await fetch('http://localhost:3000/locations');
+			const res = await fetch('http://localhost:3000/locations', {credentials: 'include'});
 			return (await res.json()).map((el) => {
 				return { value: '' + el.id, label: el.name };
 			});
 		})(),
 		contracts: await (async () => {
-			const res = await fetch('http://localhost:3000/contracts');
+			const res = await fetch('http://localhost:3000/contracts', {credentials: 'include'});
 			return (await res.json()).map((el) => {
 				return { value: '' + el.id, label: el.description };
 			});
