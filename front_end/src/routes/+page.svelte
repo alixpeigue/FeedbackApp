@@ -50,7 +50,7 @@
 	const search = async () => {
 		const res = await fetch(
 			`http://localhost:3000/reports?` +
-				new URLSearchParams({ search: searchValue || '', client: '' + (client?.id || '1') }),
+				new URLSearchParams(JSON.parse(JSON.stringify({ search: searchValue ? searchValue.split(' ').join('&') : undefined, client: client?.value.toString(), contract: contract?.value.toString(), location: location?.value.toString()}))),
 			{ credentials: 'include' }
 		);
 		reports = await res.json();
