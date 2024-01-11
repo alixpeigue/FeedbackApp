@@ -20,6 +20,8 @@ pub fn router() -> Router {
         .route("/", post(create_report))
         .route("/:id/upvotes", put(create_upvote))
         .route("/:id/upvotes", delete(delete_upvote))
+        .route("/:id/invalid_votes", put(create_invalid_vote))
+        .route("/:id/invalid_votes", delete(delete_invalid_vote))
         .route("/:id", get(report))
 }
 
@@ -45,9 +47,9 @@ async fn all_reports(
     let mut list = query_builder.separated(" AND ");
     list.push_bind_unseparated(worker.id);
     list.push_unseparated(
-        " and report_id = r.id) as upvoted,
-        COUNT(worker_id) as upvotes
-        FROM report r LEFT OUTER JOIN upvote ON report_id = r.id",
+        " and upvote.report_id = r.id) as upvoted,
+        COUNT(upvote.worker_id) as upvotes
+        FROM report r LEFT OUTER JOIN upvote ON upvote.report_id = r.id LEFT OUTER JOIN invalid_votes ON invalid_votes.report_id = r.id",
     );
     if let (None, None, None, None) = (
         &params.search,
@@ -78,7 +80,7 @@ async fn all_reports(
             list.push_bind_unseparated(client);
         }
     }
-    list.push_unseparated(" GROUP BY r.id ORDER BY upvotes DESC");
+    list.push_unseparated(" GROUP BY r.id HAVING COUNT(invalid_votes.*) < 2 ORDER BY upvotes DESC");
     let reports: Vec<ResponseReport> = query_builder
         .build_query_as()
         // .bind(worker.id)
@@ -97,10 +99,12 @@ async fn report(
     let report = sqlx::query_as!(
         ResponseReport,
         "SELECT id, text, worker, location, contract, 
-        EXISTS(SELECT * FROM upvote WHERE worker_id = $1 and report_id = id) as upvoted,
-        COUNT(worker_id) as upvotes
-        FROM report LEFT OUTER JOIN upvote ON report_id = id WHERE id=$2
-        GROUP BY id",
+        EXISTS(SELECT * FROM upvote WHERE upvote.worker_id = $1 and report_id = id) as upvoted,
+        COUNT(upvote.worker_id) as upvotes
+        FROM report LEFT OUTER JOIN upvote ON upvote.report_id = id LEFT OUTER JOIN invalid_votes ON invalid_votes.report_id = id 
+        WHERE id=$2
+        GROUP BY id
+        HAVING COUNT(invalid_votes.*) < 2",
         worker.id,
         id
     )
@@ -156,6 +160,42 @@ async fn delete_upvote(
     let worker = auth_session.user.unwrap(); // should never happen
     sqlx::query!(
         "DELETE FROM upvote WHERE worker_id = $1 AND report_id = $2",
+        worker.id,
+        id
+    )
+    .execute(&pool)
+    .await
+    .map_err(|err| match err {
+        sqlx::Error::RowNotFound => ApplicationError::NotFound,
+        err => err.into(),
+    })?;
+    Ok(())
+}
+
+async fn create_invalid_vote(
+    Extension(pool): Extension<PgPool>,
+    Path(id): Path<i32>,
+    auth_session: AuthSession<Backend>,
+) -> Result<StatusCode, ApplicationError> {
+    let worker = auth_session.user.unwrap();
+    sqlx::query!(
+        "INSERT INTO invalid_votes (worker_id, report_id) VALUES ($1, $2)",
+        worker.id,
+        id
+    )
+    .execute(&pool)
+    .await?;
+    Ok(StatusCode::CREATED)
+}
+
+async fn delete_invalid_vote(
+    Extension(pool): Extension<PgPool>,
+    Path(id): Path<i32>,
+    auth_session: AuthSession<Backend>,
+) -> Result<impl IntoResponse, ApplicationError> {
+    let worker = auth_session.user.unwrap();
+    sqlx::query!(
+        "DELETE FROM invalid_votes WHERE worker_id = $1 AND report_id = $2",
         worker.id,
         id
     )
