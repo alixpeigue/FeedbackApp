@@ -2,14 +2,14 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Separator } from '$lib/components/ui/separator';
-	import { ChevronDown, ChevronUp } from 'lucide-svelte';
+	import { ChevronUp } from 'lucide-svelte';
 	import ComboBox from '$lib/components/custom/ComboBox.svelte';
 	import ComboBoxDataType from '$lib/components/custom/ComboBox.svelte';
-	import { Toaster } from '$lib/components/ui/sonner';
 	import { toast } from 'svelte-sonner';
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
-	import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
 	import { PUBLIC_SERVER_URL } from '$env/static/public';
+	import { goto } from '$app/navigation';
+	import Notification from '$lib/components/custom/Notification.svelte';
 
 	export let data;
 	let { reports, clients, locations, contracts } = data;
@@ -69,13 +69,26 @@
 		);
 		reports = await res.json();
 	};
+
+	const logout = async () => {
+		const res = await fetch(`${PUBLIC_SERVER_URL}/logout`, {
+			credentials: "include",
+		});
+		if(res.ok) {
+			goto("/login?redirected=true");
+		}
+	}
+
 </script>
 
-<Toaster />
+<Notification />
 
 <div class="flex items-center justify-between">
 	<h1 class="my-10 text-4xl font-bold">View Reports</h1>
-	<Button href="newreport">New report</Button>
+	<div class="flex gap-5">
+		<Button on:click={logout} variant="outline">Log out</Button>
+		<Button href="newreport">New report</Button>
+	</div>
 </div>
 <!--<form class="flex gap-5 mb-10 flex-col lg:flex-row">-->
 <form class="mb-10 grid grid-cols-1 gap-5 lg:grid-cols-4" on:submit|preventDefault={search}>

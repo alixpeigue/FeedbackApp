@@ -4,6 +4,7 @@
 	import ComboBox, { type ComboBoxDataType } from '$lib/components/custom/ComboBox.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Textarea } from '$lib/components/ui/textarea';
+	import { notification } from '$lib/notification_store';
 	import type { PageData } from './$types';
 	export let data: PageData;
 	let { locations, contracts } = data;
@@ -29,6 +30,7 @@
 			})
 		});
 		if (res.ok) {
+			notification.set("Successfully created report");
 			goto('/');
 		}
 	};

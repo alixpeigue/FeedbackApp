@@ -1,12 +1,13 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { parseString } from 'set-cookie-parser';
+import { PUBLIC_SERVER_URL } from '$env/static/public';
 
 export const actions = {
 	default: async ({ cookies, request }) => {
 		const data = await request.formData();
 
-		const res = await fetch('http://localhost:3000/login', {
+		const res = await fetch(`${PUBLIC_SERVER_URL}/login`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
@@ -20,8 +21,8 @@ export const actions = {
 			const { name, value, ...opts } = parseString(new_cookie);
 			cookies.set(name, value, opts);
 		} else {
-			fail(400);
+			return fail(400, {success: false});
 		}
-		redirect(303, '/');
+		return {success: true};
 	}
 } satisfies Actions;
