@@ -7,6 +7,9 @@
 	import ComboBoxDataType from '$lib/components/custom/ComboBox.svelte';
 	import { Toaster } from '$lib/components/ui/sonner';
 	import { toast } from 'svelte-sonner';
+	import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+	import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
+	import { PUBLIC_SERVER_URL } from '$env/static/public';
 
 	export let data;
 	let { reports, clients, locations, contracts } = data;
@@ -19,7 +22,7 @@
 	console.log(clients);
 
 	const upvote = async (report) => {
-		const url = `http://localhost:3000/reports/${report.id}/upvotes`;
+		const url = `${PUBLIC_SERVER_URL}/reports/${report.id}/upvotes`;
 		if (report.upvoted) {
 			const promise = fetch(url, { method: 'DELETE', credentials: 'include' });
 			toast.promise(promise, {
@@ -47,9 +50,20 @@
 		}
 	};
 
+	const invalid = async (report) => {
+		const url = `${PUBLIC_SERVER_URL}/reports/${report.id}/invalid_votes`;
+		const promise = fetch(url, { method: 'PUT', credentials: 'include'});
+		toast.promise(promise, {
+			loading: 'Marking as invalid...',
+			success: "Successfully markes ad invalid",
+			error: 'An error happened',
+		});
+		
+	}
+
 	const search = async () => {
 		const res = await fetch(
-			`http://localhost:3000/reports?` +
+			`${PUBLIC_SERVER_URL}/reports?` +
 				new URLSearchParams(JSON.parse(JSON.stringify({ search: searchValue ? searchValue.split(' ').join('&') : undefined, client: client?.value.toString(), contract: contract?.value.toString(), location: location?.value.toString()}))),
 			{ credentials: 'include' }
 		);
@@ -64,12 +78,12 @@
 	<Button href="newreport">New report</Button>
 </div>
 <!--<form class="flex gap-5 mb-10 flex-col lg:flex-row">-->
-<form class="mb-10 grid grid-cols-1 gap-5 lg:grid-cols-4">
+<form class="mb-10 grid grid-cols-1 gap-5 lg:grid-cols-4" on:submit|preventDefault={search}>
 	<Input placeholder="search" bind:value={searchValue} class="lg:col-span-3" />
 	<ComboBox list={clients} defaultValue="Search clients..." bind:selectedValue={client} />
 	<ComboBox list={contracts} defaultValue="Search contracts..." bind:selectedValue={contract} />
 	<ComboBox list={locations} defaultValue="Search locations..." bind:selectedValue={location} />
-	<Button on:click={search} class="lg:col-start-4 lg:row-start-1">Search</Button>
+	<Button type="submit" class="lg:col-start-4 lg:row-start-1">Search</Button>
 </form>
 {#if reports.length != 0}
 	<div class="flex flex-col gap-5">
@@ -80,9 +94,16 @@
 						<ChevronUp strokeWidth="3" class={report.upvoted ? '' : 'opacity-30'} />
 					</button>
 					{report.upvotes}
-					<ChevronDown strokeWidth="3" class="opacity-30" />
 				</div>
 				<p>{report.text}</p>
+				<DropdownMenu.Root>
+				    <DropdownMenu.Trigger class="ml-auto text-xl">...</DropdownMenu.Trigger>
+				    <DropdownMenu.Content>
+				    	<DropdownMenu.Group>
+				      		<DropdownMenu.Item on:click={()=>invalid(report)}>Mark as invalid report</DropdownMenu.Item>
+				    	</DropdownMenu.Group>
+				  	</DropdownMenu.Content>
+				</DropdownMenu.Root>
 			</div>
 			<Separator />
 		{/each}
