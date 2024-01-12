@@ -55,7 +55,7 @@
 		const promise = fetch(url, { method: 'PUT', credentials: 'include'});
 		toast.promise(promise, {
 			loading: 'Marking as invalid...',
-			success: "Successfully markes ad invalid",
+			success: "Successfully marked as invalid",
 			error: 'An error happened',
 		});
 		
