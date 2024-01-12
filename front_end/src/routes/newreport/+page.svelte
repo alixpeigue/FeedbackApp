@@ -11,12 +11,14 @@
 	let contract: ComboBoxDataType | undefined;
 	let location: ComboBoxDataType | undefined;
 	let text: string;
+    let isSubmitClicked: boolean = false;
 
 	const submit = async (e: SubmitEvent) => {
 		const formData = new FormData(e.target as HTMLFormElement);
 		if (contract === undefined || location === undefined) {
 			return;
 		}
+        isSubmitClicked = true;
 		const res = await fetch(`${PUBLIC_SERVER_URL}/reports`, {
 			method: 'POST',
 			credentials: 'include',
@@ -50,6 +52,6 @@
 		/>
 		<ComboBox list={contracts} defaultValue="Select contract..." bind:selectedValue={contract} />
 		<ComboBox list={locations} defaultValue="Select location..." bind:selectedValue={location} />
-		<Button type="submit">Create report</Button>
+		<Button type="submit" disabled={isSubmitClicked}>Create report</Button>
 	</form>
 </div>
