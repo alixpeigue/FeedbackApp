@@ -27,6 +27,8 @@ async fn main() -> anyhow::Result<()> {
 
     assert_eq!(key, "DATABASE_URL");
 
+    println!("Starting backend");
+
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
             std::env::var("tower_http=trace")
@@ -42,6 +44,8 @@ async fn main() -> anyhow::Result<()> {
         .connect(&database_url)
         .await
         .context("can't connect to database")?;
+
+    println!("Database connected");
 
     // Session layer.
     //
@@ -81,8 +85,10 @@ async fn main() -> anyhow::Result<()> {
         .layer(CorsLayer::new().allow_origin(Any))
         .layer(auth_layer);
 
+    println!("App created");
     // run it with hyper
-    let listener = TcpListener::bind("127.0.0.1:3000").await?;
+    let listener = TcpListener::bind("0.0.0.0:3000").await?;
+    println!("TcpListener created");
     tracing::debug!("listening on {}", listener.local_addr()?);
     axum::serve(listener, app).await?;
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { PUBLIC_SERVER_URL } from '$env/static/public';
+    import { backend_url } from '$lib/utils.js';
 	import ComboBox, { type ComboBoxDataType } from '$lib/components/custom/ComboBox.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Textarea } from '$lib/components/ui/textarea';
@@ -19,7 +19,7 @@
 			return;
 		}
         isSubmitClicked = true;
-		const res = await fetch(`${PUBLIC_SERVER_URL}/reports`, {
+		const res = await fetch(`${backend_url()}/reports`, {
 			method: 'POST',
 			credentials: 'include',
 			headers: {

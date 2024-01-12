@@ -17,5 +17,20 @@ services:
     container_name: backend
     build: back_end
     restart: always
+  front_end:
+    depends_on:
+      - back_end
+    container_name: frontend
+    build: front_end
+    restart: always
+    environment:
+      PORT: 5050
+      ORIGIN: "http://localhost:8080"
+  proxy:
+    container_name: proxy
+    depends_on:
+      - back_end
+      - front_end
+    build: nginx
     ports:
-      - 3000:3000
+      - 8080:8080

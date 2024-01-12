@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM invalid_votes WHERE worker_id = $1 AND report_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4b145113b7f3726bb05e9d718cfe76c11af4cee01db98dccc422e483402efa20"
+}

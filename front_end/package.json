@@ -38,6 +38,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@sveltejs/adapter-node": "^3.0.0",
 		"bits-ui": "^0.13.6",
 		"clsx": "^2.1.0",
 		"cmdk-sv": "^0.0.12",

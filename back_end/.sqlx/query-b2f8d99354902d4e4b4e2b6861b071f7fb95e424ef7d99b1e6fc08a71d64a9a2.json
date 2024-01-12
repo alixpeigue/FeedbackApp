@@ -1,0 +1,59 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, text, worker, location, contract, \n        EXISTS(SELECT * FROM upvote WHERE upvote.worker_id = $1 and report_id = id) as upvoted,\n        COUNT(upvote.worker_id) as upvotes\n        FROM report LEFT OUTER JOIN upvote ON upvote.report_id = id LEFT OUTER JOIN invalid_votes ON invalid_votes.report_id = id \n        WHERE id=$2\n        GROUP BY id\n        HAVING COUNT(invalid_votes.*) < 2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "text",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "worker",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "location",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "contract",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 5,
+        "name": "upvoted",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 6,
+        "name": "upvotes",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "b2f8d99354902d4e4b4e2b6861b071f7fb95e424ef7d99b1e6fc08a71d64a9a2"
+}

@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { cubicOut } from 'svelte/easing';
 import type { TransitionConfig } from 'svelte/transition';
+import { PUBLIC_INTERNAL_SERVER_URL, PUBLIC_EXTERNAL_SERVER_URL  } from '$env/static/public';
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
@@ -54,3 +55,7 @@ export const flyAndScale = (
 		easing: cubicOut
 	};
 };
+
+export function backend_url(): string {
+    return import.meta.env.SSR ? PUBLIC_INTERNAL_SERVER_URL : PUBLIC_EXTERNAL_SERVER_URL;
+}

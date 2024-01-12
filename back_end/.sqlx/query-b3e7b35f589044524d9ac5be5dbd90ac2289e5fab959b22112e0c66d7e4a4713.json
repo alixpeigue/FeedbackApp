@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM upvote WHERE worker_id = $1 AND report_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b3e7b35f589044524d9ac5be5dbd90ac2289e5fab959b22112e0c66d7e4a4713"
+}

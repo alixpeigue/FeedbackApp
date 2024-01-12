@@ -1,13 +1,13 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { parseString } from 'set-cookie-parser';
-import { PUBLIC_SERVER_URL } from '$env/static/public';
+import { backend_url } from '$lib/utils.js';
 
 export const actions = {
 	default: async ({ cookies, request }) => {
 		const data = await request.formData();
 
-		const res = await fetch(`${PUBLIC_SERVER_URL}/login`, {
+		const res = await fetch(`${backend_url()}/login`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'

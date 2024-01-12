@@ -7,9 +7,9 @@
 	import ComboBoxDataType from '$lib/components/custom/ComboBox.svelte';
 	import { toast } from 'svelte-sonner';
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
-	import { PUBLIC_SERVER_URL } from '$env/static/public';
 	import { goto } from '$app/navigation';
 	import Notification from '$lib/components/custom/Notification.svelte';
+    import { backend_url } from '$lib/utils.js';
 
 	export let data;
 	let { reports, clients, locations, contracts } = data;
@@ -22,7 +22,7 @@
 	console.log(clients);
 
 	const upvote = async (report) => {
-		const url = `${PUBLIC_SERVER_URL}/reports/${report.id}/upvotes`;
+		const url = `${backend_url()}/reports/${report.id}/upvotes`;
 		if (report.upvoted) {
 			const promise = fetch(url, { method: 'DELETE', credentials: 'include' });
 			toast.promise(promise, {
@@ -51,7 +51,7 @@
 	};
 
 	const invalid = async (report) => {
-		const url = `${PUBLIC_SERVER_URL}/reports/${report.id}/invalid_votes`;
+		const url = `${backend_url()}/reports/${report.id}/invalid_votes`;
 		const promise = fetch(url, { method: 'PUT', credentials: 'include'});
 		toast.promise(promise, {
 			loading: 'Marking as invalid...',
@@ -63,7 +63,7 @@
 
 	const search = async () => {
 		const res = await fetch(
-			`${PUBLIC_SERVER_URL}/reports?` +
+			`${backend_url()}/reports?` +
 				new URLSearchParams(JSON.parse(JSON.stringify({ search: searchValue ? searchValue.split(' ').join('&') : undefined, client: client?.value.toString(), contract: contract?.value.toString(), location: location?.value.toString()}))),
 			{ credentials: 'include' }
 		);
@@ -71,7 +71,7 @@
 	};
 
 	const logout = async () => {
-		const res = await fetch(`${PUBLIC_SERVER_URL}/logout`, {
+		const res = await fetch(`${backend_url()}/logout`, {
 			credentials: "include",
 		});
 		if(res.ok) {
