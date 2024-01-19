@@ -4,4 +4,3 @@ CREATE TABLE contract (
     client INT REFERENCES client(id) NOT NULL
 );
 
-INSERT INTO contract (description, client) VALUES ('entretien de matériel roulant', 1), (NULL, 2);

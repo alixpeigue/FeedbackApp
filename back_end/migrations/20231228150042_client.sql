@@ -3,4 +3,3 @@ CREATE TABLE client (
     name varchar(255) NOT NULL
 );
 
-INSERT INTO client (name) VALUES ('TCL'), ('OnePoint'), ('Esker');

@@ -3,4 +3,3 @@ CREATE TABLE worker (
     name VARCHAR(255) NOT NULL
 );
 
-INSERT INTO worker (name) VALUES ('Jean DUPUIS'), ('Céline KRAPIVIC');
