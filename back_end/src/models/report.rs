@@ -25,4 +25,7 @@ pub struct ResponseReport {
     pub contract: i32,
     pub upvoted: Option<bool>,
     pub upvotes: Option<i64>,
+    pub worker_name: String,
+    pub contract_description: Option<String>,
+    pub location_name: String,
 }

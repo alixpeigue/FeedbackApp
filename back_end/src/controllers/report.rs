@@ -48,8 +48,9 @@ async fn all_reports(
     list.push_bind_unseparated(worker.id);
     list.push_unseparated(
         " and upvote.report_id = r.id) as upvoted,
-        COUNT(upvote.worker_id) as upvotes
-        FROM report r LEFT OUTER JOIN upvote ON upvote.report_id = r.id LEFT OUTER JOIN invalid_votes ON invalid_votes.report_id = r.id",
+        COUNT(upvote.worker_id) as upvotes, worker.name as worker_name, contract.description as contract_description, location.name as location_name
+        FROM report r LEFT OUTER JOIN upvote ON upvote.report_id = r.id LEFT OUTER JOIN invalid_votes ON invalid_votes.report_id = r.id LEFT OUTER JOIN worker ON r.worker = worker.id
+        LEFT OUTER JOIN contract on r.contract = contract.id LEFT OUTER JOIN location ON r.location = location.id",
     );
     if let (None, None, None, None) = (
         &params.search,
@@ -80,7 +81,7 @@ async fn all_reports(
             list.push_bind_unseparated(client);
         }
     }
-    list.push_unseparated(" GROUP BY r.id HAVING COUNT(invalid_votes.*) < 2 ORDER BY upvotes DESC");
+    list.push_unseparated(" GROUP BY r.id, worker.name, contract_description, location_name HAVING COUNT(invalid_votes.*) < 2 ORDER BY upvotes DESC");
     let reports: Vec<ResponseReport> = query_builder
         .build_query_as()
         // .bind(worker.id)
@@ -98,12 +99,13 @@ async fn report(
     let worker = auth_session.user.unwrap();
     let report = sqlx::query_as!(
         ResponseReport,
-        "SELECT id, text, worker, location, contract, 
-        EXISTS(SELECT * FROM upvote WHERE upvote.worker_id = $1 and report_id = id) as upvoted,
-        COUNT(upvote.worker_id) as upvotes
-        FROM report LEFT OUTER JOIN upvote ON upvote.report_id = id LEFT OUTER JOIN invalid_votes ON invalid_votes.report_id = id 
-        WHERE id=$2
-        GROUP BY id
+        "SELECT report.id as id, text, worker, location, contract, 
+        EXISTS(SELECT * FROM upvote WHERE upvote.worker_id = $1 and report_id = report.id) as upvoted,
+        COUNT(upvote.worker_id) as upvotes, worker.name as worker_name, contract.description as contract_description, location.name as location_name
+        FROM report LEFT OUTER JOIN upvote ON upvote.report_id = report.id LEFT OUTER JOIN invalid_votes ON invalid_votes.report_id = report.id LEFT OUTER JOIN worker ON report.worker = worker.id
+        LEFT OUTER JOIN contract on report.contract = contract.id LEFT OUTER JOIN location ON report.location = location.id
+        WHERE report.id=$2
+        GROUP BY report.id, worker_name, contract_description, location_name
         HAVING COUNT(invalid_votes.*) < 2",
         worker.id,
         id

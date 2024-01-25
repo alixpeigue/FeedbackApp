@@ -118,6 +118,7 @@
 				  	</DropdownMenu.Content>
 				</DropdownMenu.Root>
 			</div>
+            <p>{report.worker_name}, {report.contract_description ?? ""}{report.contract_description ? ", " : ""}{report.location_name}</p>
 			<Separator />
 		{/each}
 	</div>
