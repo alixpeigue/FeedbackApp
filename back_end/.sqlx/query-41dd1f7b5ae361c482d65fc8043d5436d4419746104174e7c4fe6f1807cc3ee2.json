@@ -1,0 +1,77 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT report.id as id, text, worker, location, contract, \n        EXISTS(SELECT * FROM upvote WHERE upvote.worker_id = $1 and report_id = report.id) as upvoted,\n        COUNT(upvote.worker_id) as upvotes, worker.name as worker_name, contract.description as contract_description, location.name as location_name\n        FROM report LEFT OUTER JOIN upvote ON upvote.report_id = report.id LEFT OUTER JOIN invalid_votes ON invalid_votes.report_id = report.id LEFT OUTER JOIN worker ON report.worker = worker.id\n        LEFT OUTER JOIN contract on report.contract = contract.id LEFT OUTER JOIN location ON report.location = location.id\n        WHERE report.id=$2\n        GROUP BY report.id, worker_name, contract_description, location_name\n        HAVING COUNT(invalid_votes.*) < 2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "text",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "worker",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "location",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "contract",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 5,
+        "name": "upvoted",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 6,
+        "name": "upvotes",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 7,
+        "name": "worker_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 8,
+        "name": "contract_description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "location_name",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      null,
+      null,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "41dd1f7b5ae361c482d65fc8043d5436d4419746104174e7c4fe6f1807cc3ee2"
+}

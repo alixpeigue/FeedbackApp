@@ -7,8 +7,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always
-    ports:
-      - 5432:5432
     environment:
       POSTGRES_PASSWORD: passwd
   back_end:
@@ -17,11 +15,13 @@ services:
     container_name: backend
     build: back_end
     restart: always
+    image: gitea.blazanome.ynh.fr/tools/sie_backend:latest
   front_end:
     depends_on:
       - back_end
     container_name: frontend
     build: front_end
+    image: gitea.blazanome.ynh.fr/tools/sie_frontend:latest
     restart: always
     environment:
       PORT: 5050
@@ -32,6 +32,7 @@ services:
       - back_end
       - front_end
     build: nginx
+    image: gitea.blazanome.ynh.fr/tools/sie_proxy:latest
     ports:
       - 8080:8080
 volumes:
